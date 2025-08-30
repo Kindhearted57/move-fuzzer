@@ -15,7 +15,7 @@ Sui-fuzzer has two modes:
 
 ##### Fuzzing Framework
 
-**Coverage based fuzzing**: xxx
+**Coverage based fuzzing**: Currently, coverage based fuzzing only applies to stateless fuzzing, stateful fuzzing does not have any feedback mechanism. In stateful fuzzing, it is difficult to use coverage as a meaningful feedback signal because transactions can span multiple contracts, depend on complex sequences of object state changes, and interact with shared resources. Unlike stateless fuzzing, where each input can be treated in isolation and coverage directly indicates which execution paths have been explored, in stateful fuzzing the effect of a single input is highly context-dependent.
 **Property-based fuzzing**: xxx
 **Sui-Fuzzer Workflow**:
 1. Input Generation: Start with random or structured inputs for Move smart contract functions
@@ -59,7 +59,8 @@ Economic consequences – Bugs can have direct financial impact (e.g., draining 
 
 Deterministic & transactional context – Smart contracts run deterministically on-chain, often interacting with shared state. This differs from traditional applications, where crashes or undefined behavior are the primary target.
 
-Therefore, in my opion, in the context of smart contracts, reaching "novel paths" is not sufficient, the fuzzer must also consider gas limit.
+Therefore, in my opinion, in the context of smart contracts, reaching "novel paths" is not sufficient, the fuzzer must also consider gas limit.
+
 
 ### VM Fuzzer
 
