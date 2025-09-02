@@ -107,14 +107,19 @@ Due to conflicting move library versions, I separate `Cargo.toml` file into `Car
 **2) Transaction execution architecture**
 
 **Sui**: Object-centric model 
+
 \- Uses `ProgrammableTransactionBuilder`
+
 \- Transactions operate on objects with unique ObjectIDs
+
 \- Features object versioning and ownership semantics
 
 **Aptos**: Account-centric model
 
 \- Uses `EntryFunction` + `TransactionPayload`
+
 \- Transactions are account-based operations
+
 \- Uses `FakeExecutor` for testing
 
 
@@ -125,6 +130,7 @@ Implemented conversion logic to handle the different argument passing mechanisms
 **4) VM integration approach**
 
 Sui: Uses `send_and_confirm_transaction()` with a test executor infrastructure
+
 Aptos: Uses `FakeExecutor::execute_transaction()` with e2e test infrastructure
 
 Overall, this adaptation enables cross platform fuzzing capabilities for move smart contracts, reuses core fuzzing component, unifies fuzzing framework.
@@ -145,14 +151,19 @@ Coverage based fuzzing has a long history in traditional software testing, the m
 However, smart contract fuzzing is fundamentally different, for at least the following reasons:
 
 **1) Resource-constrained execution**
+
 \- Every operation consumes gas within strict limits
+
 \- Valid execution paths that approach gas limits represent critical edge cases
+
 \- Coverage alone cannot identify gas inefficient but functionally correct paths
 
 
 **2) Economic consequences**
 Coverage metrics don’t account for these risks:
-\- Bugs directly translate to finacial losses (token drainage, economic exploits)
+
+\- Bugs directly translate to finacial losses (token drainage, 
+economic exploits)
 \- DoS through gas exhaustion is also a concern
 
 
@@ -189,8 +200,11 @@ The advantages of a source code level fuzzer include:
 However, in the Solidity ecosystem. We can see lots of fuzzers that target bytecode level. Part of this can be attributed to its early dominance on Ethereum, Solidity has a more developed ecosystem. Solidity benefits from a rich ecosystem of bytecode-level analysis tools, for example:
 
 \- Symbolic execution engines (Mythril, Manticore)
+
 \- Static analysis frameworks (Slither, Securify)
+
 \- Bytcode decompilers and analyzers
+
 \- Extenstive EVM tooling and libraries
 
 This maturity makes bytecode-level fuzzing more feasible for Ethereum, while in contrast, the Move ecosystem currently lacks these relavant tools. Therefore, source code level fuzzing is more practical.
@@ -199,8 +213,11 @@ However, bytecode-level fuzzing offers advantages that source-code level fuzzing
 
 
 **\- Language agnostic:** Fuzzer can analyze contracts written in different Move dialects
+
 **\- Compilation agnostic:** Fuzzer does not need to be concerned about compiler versions. Issues introduced during compilation optimizations can also be detected
+
 **\- Source code agnostic** Not all on chain contracts have public available source code. It is important to work on bytecode level contracts.
+
 **\- ABI-level fuzzing:** Direct testing of contract interfaces as they appear to external callers
 
 Therefore, in my opinion, it is important to build fundamental toolkit to improve the ecosystem, and work towards bytecode level fuzzing.
