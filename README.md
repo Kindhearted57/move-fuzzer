@@ -7,21 +7,29 @@ Relevant code can be found in the master branch of [this](https://github.com/Kin
 
 1) **Gas-aware feedback**: Added gas usage as a feedback metric to guide stateful fuzzing with the Aptos backend. 
 
-[Gas info collection - commit # bdcfb55](https://github.com/Kindhearted57/sui-fuzzer/commit/bdcfb5579240ed474a0a5f21267387160b07bcb0)
+    [Gas info collection - commit # bdcfb55](https://github.com/Kindhearted57/sui-fuzzer/commit/bdcfb5579240ed474a0a5f21267387160b07bcb0)
+
+    [Gas bias feedback - commit # d98dc7e](https://github.com/Kindhearted57/sui-fuzzer/commit/d98dc7e0f17a321a30de22d894f44d5efd4d810d)
 
 2) **Aptos compatibility**: Adapted Sui-fuzzer to work with Move smart contracts on Aptos.
 
-[commit # 949864d](https://github.com/Kindhearted57/sui-fuzzer/commit/949864d1b1c9d9e943abee9e7bf1946cefe4b8c6)
+    [commit # 949864d](https://github.com/Kindhearted57/sui-fuzzer/commit/949864d1b1c9d9e943abee9e7bf1946cefe4b8c6)
 
-[commit # dde8691](https://github.com/Kindhearted57/sui-fuzzer/commit/dde869173bac74279ae5a8fcac6981b4f21ca854)
+    [commit # dde8691](https://github.com/Kindhearted57/sui-fuzzer/commit/dde869173bac74279ae5a8fcac6981b4f21ca854)
 
-In the future, I want to explore bytecode level fuzzer for Move smart contracts, optimize input corpus generation and integrate concolic fuzzing assisted by symbolic execution.
+In the future, I want to explore bytecode level fuzzer for Move smart contracts, optimize input corpus generation and integrate concolic fuzzing assisted by symbolic execution. Besides, I think some of the fuzzing techniques discussed here can also be useful for Aptos VM fuzzer.
 
 ## Setup Instructions
+
+### Build
+
+Sui and Aptos builds are separated. Each shell script copies over the corresponding cargo configuration file and builds the target.
 
 Build Sui - `./build-sui.sh`
 
 Build Aptos - `./build-aptos.sh`
+
+### Run script
 
 Run stateless Sui fuzzer - 
 
@@ -43,12 +51,13 @@ cargo run --release -- \
 
 
 
+From this section on, I document my reasonings on this project:
+
 ## Move Smart Contract Fuzzing
 
 ### Sui-fuzzer
 
 Sui-fuzzer (FuzzingLabs) is a specialized tool for discovering bugs and vulnerabilities in Sui Move smart contracts. It carries out both stateless and stateful fuzz testing for smart contracts at the source-code level, supporting contracts executed on the Sui Virtual Machine.
-
 
 
 ### Different Modes
@@ -60,9 +69,6 @@ Sui-fuzzer provides two fuzzing modes:
 
 ### Fuzzing Framework
 
-**Coverage based fuzzing**: 
-
-Currently, coverage based fuzzing is only applied to stateless fuzzing in Sui-fuzzer. Stateful fuzzing lacks a meaningful feedback mechanism because transactions can span multiple contracts, depend on complex sequences of object state changes, and interact with shared resources. Unlike stateless fuzzing, where each input is isolated and coverage directly reflects which execution paths have been explored. In stateful fuzzing, the effect of a single input is highly context-dependent.
 
 
 **Sui-Fuzzer Workflow**:
@@ -76,9 +82,12 @@ Stateful - There is no feedback mechanism as described in the coveraged based fu
 There are two levels of mutation for stateful fuzzing, sequence level and parameter level. For stateless fuzzing there is only parameter level.
 Sequence level: Generates random call sequences by combining `target_functions` and `fuzz_functions`, randomly duplicates functions from existing sequence to create longer sequences. Shuffle entire sequence to randomize execution order.
 Parameter level: each function in sequence gets its parameters mutated.
-4. **Crash & Bug Detection**: Fuzzer monitors for crashes, aborts or invariant violations. Detected issues are recorded along with the input sequence that triggered them.
+5. **Crash & Bug Detection**: Fuzzer monitors for crashes, aborts or invariant violations. Detected issues are recorded along with the input sequence that triggered them.
 5. **Output**: Logs of interesting inputs, sequences, coverage statistics, and potential vulnerabilities.
 
+**Coverage based fuzzing**: 
+
+Currently, coverage based fuzzing is only applied to stateless fuzzing in Sui-fuzzer. Stateful fuzzing lacks a meaningful feedback mechanism because transactions can span multiple contracts, depend on complex sequences of object state changes, and interact with shared resources (in the context of Sui). Unlike stateless fuzzing, where each input is isolated and coverage directly reflects which execution paths have been explored. In stateful fuzzing, the effect of a single input is highly context-dependent.
 
 ## My Approach & Contribution
 
@@ -160,11 +169,11 @@ However, smart contract fuzzing is fundamentally different, for at least the fol
 
 
 **2) Economic consequences**
+
 Coverage metrics don’t account for these risks:
 
-\- Bugs directly translate to finacial losses (token drainage, 
-economic exploits)
-\- DoS through gas exhaustion is also a concern
+\- Bugs that directly translate to finacial losses (token drainage, economic exploits)
+\- DoS through gas exhaustion
 
 
 
@@ -175,20 +184,27 @@ economic exploits)
 
 Therefore, in my opinion, in the context of smart contracts, reaching "novel paths" is not sufficient, the fuzzer must also consider gas limit.
 
-I implemented in this project gas-aware feedback, where I track gas consumption patterns along with code coverage. In the mutation step, I prioritize inputs that approach gas limits or show unusual consumption.
+In this project, I extend the feedback mechanism by incorporating gas consumption alongside code coverage. During mutation, inputs that consume more gas are prioritized — the fuzzer gives these inputs a higher probability of generating new test cases.
+
+This is an early design, and there is more to explore in gas-based feedback. For example:
+
+1) Context-aware gas tracking: Focus on the specific function or module where high gas consumption occurs.
+
+2) Anomaly detection: Identify unusual gas usage patterns, such as sudden spikes in total gas consumption.
+
+3) Dynamic thresholds: Adjust prioritization based on deviation from typical gas usage rather than absolute values.
 
 ### Future Work
 
 #### Other potential feedback metrics
 
-We can also consider using contract state changes as feedback signals, track state transition uniqueness beyond code coverage.
+Beyond coverage and gas usage, additional feedback signals could improve fuzzing effectiveness. Besides the different possibility of gas-based feedback mentioned above, we can also consider to use state change uniqueness as a metric. Track and prioritize inputs that trigger novel contract state transitions.
+
 
 
 #### ByteCode level fuzzer
 
-Sui-fuzzer is a source-code level fuzzer. The adaptation I made also works on source-code level.
-
-The advantages of a source code level fuzzer include:
+Currently, both Sui-fuzzer and this adaptation operate at the source-code level. While this has advantages—
 
 \- **Clearer input-behavior mapping**: Direct correlation between fuzzer inputs and source code execution paths, more developer friendly.
 
@@ -197,7 +213,7 @@ The advantages of a source code level fuzzer include:
 \- **Developer-friendly output**: Discovered vulnerabilities are reported in a way that developers can better understsand.
 
 
-However, in the Solidity ecosystem. We can see lots of fuzzers that target bytecode level. Part of this can be attributed to its early dominance on Ethereum, Solidity has a more developed ecosystem. Solidity benefits from a rich ecosystem of bytecode-level analysis tools, for example:
+We can see that in the Solidity ecosystem, many fuzzers operate at the bytecode level. This is partly due to Ethereum’s early dominance and Solidity’s more mature tooling, including
 
 \- Symbolic execution engines (Mythril, Manticore)
 
@@ -209,7 +225,7 @@ However, in the Solidity ecosystem. We can see lots of fuzzers that target bytec
 
 This maturity makes bytecode-level fuzzing more feasible for Ethereum, while in contrast, the Move ecosystem currently lacks these relavant tools. Therefore, source code level fuzzing is more practical.
 
-However, bytecode-level fuzzing offers advantages that source-code level fuzzing cannot achieve:
+Bytecode-level fuzzing offers advantages that source-code level fuzzing cannot achieve:
 
 
 **\- Language agnostic:** Fuzzer can analyze contracts written in different Move dialects
@@ -220,7 +236,13 @@ However, bytecode-level fuzzing offers advantages that source-code level fuzzing
 
 **\- ABI-level fuzzing:** Direct testing of contract interfaces as they appear to external callers
 
-Therefore, in my opinion, it is important to build fundamental toolkit to improve the ecosystem, and work towards bytecode level fuzzing.
+For these reasons, building foundational tooling to support bytecode-level fuzzing is an important step toward strengthening the Move fuzzing ecosystem.
+
+
+#### Concolic fuzzing
+
+Finally, integrating concolic (concrete + symbolic) execution could improve path exploration. While the current fuzzer relies on developer-provided invariants for bug detection, symbolic execution could systematically generate inputs to satisfy complex path conditions and complement coverage/gas-based fuzzing.
+
 ### Reference
 
 FuzzingLabs/Sui-Fuzzer: https://github.com/FuzzingLabs/sui-fuzzer/tree/master/src
@@ -230,3 +252,5 @@ Fuzzland/ityfuzz: https://github.com/fuzzland/ityfuzz
 meridian_amm contracts: https://explorer.movementnetwork.xyz/account/0xfbdb3da73efcfa742d542f152d65fc6da7b55dee864cd66475213e4be18c9d54/modules/packages/MeridianAmm?network=mainnet
 
 razor_amm contracts: https://explorer.movementnetwork.xyz/account/0xc4e68f29fa608d2630d11513c8de731b09a975f2f75ea945160491b9bfd36992/modules/code/amm_router?network=mainnet
+
+Gas Fuzzer: https://scispace.com/pdf/gasfuzzer-fuzzing-ethereum-smart-contract-binaries-to-expose-32okh8sdma.pdf
