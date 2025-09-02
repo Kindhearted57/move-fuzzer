@@ -174,12 +174,15 @@ However, smart contract fuzzing is fundamentally different, for at least the fol
 Coverage metrics don’t account for these risks:
 
 \- Bugs that directly translate to finacial losses (token drainage, economic exploits)
+
 \- DoS through gas exhaustion
 
 
 
 **3) Deterministic & transactional context**
+
 \- Smart contracts run deterministically on-chain, often interacting with shared state. This differs from traditional applications, where crashes or undefined behavior are the primary target.
+
 \- State-dependent vulnerabilities may not manifest through coverage alone
 
 
