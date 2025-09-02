@@ -3,7 +3,9 @@
 
 This project enhances Sui-fuzzer to support Move smart contracts on Aptos and introduces gas-aware fuzzing.
 
-Relevant code can be found in the master branch of [this](https://github.com/Kindhearted57/sui-fuzzer) repo, I built on top of the current Sui-fuzzer codebase.
+All relevant code can be found on the master branch of [this](https://github.com/Kindhearted57/sui-fuzzer) repo, I built on top of the current Sui-fuzzer codebase.
+
+Here are some of the key commits:
 
 1) **Gas-aware feedback**: Added gas usage as a feedback metric to guide stateful fuzzing with the Aptos backend. 
 
@@ -37,7 +39,7 @@ Run stateless Sui fuzzer -
 cargo run --release -- \
   --config-path ./config_stateless.json \
   --target-module fuzzinglabs_module \
-  --target-function fuzzinglabs`
+  --target-function fuzzinglabs
 ```
 
 Run stateful Aptos fuzzer - 
@@ -50,8 +52,7 @@ cargo run --release -- \
 ```
 
 
-
-From this section on, I document my reasonings on this project:
+From the next  section on, I document my reasonings on this project:
 
 ## Move Smart Contract Fuzzing
 
@@ -77,10 +78,10 @@ Sui-fuzzer provides two fuzzing modes:
 2. **Execution**: Inputs are executed on the Sui Move VM
 3. **Feedback**:
 Stateless - In each step, inputs that explore new paths are saved and mutated to generate new test cases
-Stateful - There is no feedback mechanism as described in the coveraged based fuzzing section.
+Stateful - There is no feedback mechanism as described in the coveraged based fuzzing section
 4. **Mutation**:
 There are two levels of mutation for stateful fuzzing, sequence level and parameter level. For stateless fuzzing there is only parameter level.
-Sequence level: Generates random call sequences by combining `target_functions` and `fuzz_functions`, randomly duplicates functions from existing sequence to create longer sequences. Shuffle entire sequence to randomize execution order.
+Sequence level: Generates random call sequences by combining `target_functions` and `fuzz_functions`, randomly duplicates functions from existing sequence to create longer sequence. Shuffle entire sequence to randomize execution order.
 Parameter level: each function in sequence gets its parameters mutated.
 5. **Crash & Bug Detection**: Fuzzer monitors for crashes, aborts or invariant violations. Detected issues are recorded along with the input sequence that triggered them.
 5. **Output**: Logs of interesting inputs, sequences, coverage statistics, and potential vulnerabilities.
@@ -117,7 +118,7 @@ Due to conflicting move library versions, I separate `Cargo.toml` file into `Car
 
 **Sui**: Object-centric model 
 
-\- Uses `ProgrammableTransactionBuilder`
+\- Uses `TransactionBuilder`
 
 \- Transactions operate on objects with unique ObjectIDs
 
@@ -232,9 +233,8 @@ Bytecode-level fuzzing offers advantages that source-code level fuzzing cannot a
 
 **\- Compilation agnostic:** Fuzzer does not need to be concerned about compiler versions. Issues introduced during compilation optimizations can also be detected
 
-**\- Source code agnostic** Not all on chain contracts have public available source code. It is important to work on bytecode level contracts.
+**\- Source code agnostic** Not all on chain contracts have public available source code. Working on bytecode level is the only choice under these circumstances.
 
-**\- ABI-level fuzzing:** Direct testing of contract interfaces as they appear to external callers
 
 For these reasons, building foundational tooling to support bytecode-level fuzzing is an important step toward strengthening the Move fuzzing ecosystem.
 
