@@ -23,6 +23,14 @@ In the future, I want to explore bytecode level fuzzer for Move smart contracts,
 
 ## Setup Instructions
 
+### Initialize submodules
+
+`git submodule update --init --recursive`
+
+### Dependencies
+
+There is an error in `aptos-core`, check [this link](https://github.com/aptos-labs/aptos-core/issues/10325?utm_source=chatgpt.com) for fix.
+
 ### Build
 
 Sui and Aptos builds are separated. Each shell script copies over the corresponding cargo configuration file and builds the target.
